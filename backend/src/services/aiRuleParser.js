@@ -1,6 +1,8 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 async function parseEnglishToRules(userInput) {
   try {
@@ -8,23 +10,20 @@ async function parseEnglishToRules(userInput) {
       throw new Error("Invalid query input");
     }
 
-    const model = genAI.getGenerativeModel({
-      model: "models/gemini-2.5-flash",
-      generationConfig: {
-        temperature: 0.1
-      },
-    });
-
     const prompt = `
 You are a financial stock screener rule compiler.
 
-Return ONLY valid JSON.
+Convert the user's natural language request into ONLY valid JSON.
 
-Schema:
+Required schema:
 
 {
   "filters": [
-    { "field": "pe_ratio", "operator": "<", "value": 20 }
+    {
+      "field": "pe_ratio",
+      "operator": "<",
+      "value": 20
+    }
   ],
   "sector": null,
   "sort": {
@@ -53,42 +52,50 @@ Allowed operators:
 between
 
 Rules:
-- If user says "top N", set limit = N.
-- If user says "highest", sort DESC.
-- If user says "lowest", sort ASC.
-- If nothing specified, set null.
-- No explanations.
+- "top N" means limit = N.
+- "highest" means sort direction DESC.
+- "lowest" means sort direction ASC.
+- If no sorting is requested, sort = null.
+- If no sector is mentioned, sector = null.
+- If no limit is mentioned, limit = null.
+- "below" means <.
+- "above" means >.
+- "under" means <.
+- "over" means >.
+- Return JSON only.
 - No markdown.
-- JSON only.
+- No explanations.
 
 User Query:
-"${userInput}"
+${userInput}
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt,
+      config: {
+        temperature: 0.1,
+        responseMimeType: "application/json",
+      },
+    });
 
-    const cleaned = text.replace(/```json|```/g, "").trim();
+    const text = response.text.trim();
 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch (err) {
-      console.error("Raw AI Output:", cleaned);
-      throw new Error("AI returned invalid JSON");
-    }
+    const parsed = JSON.parse(text);
 
     // Safety defaults
-    parsed.filters = parsed.filters || [];
+    parsed.filters = Array.isArray(parsed.filters)
+      ? parsed.filters
+      : [];
+
     parsed.sort = parsed.sort || null;
-    parsed.limit = parsed.limit || null;
+    parsed.limit = parsed.limit ?? null;
     parsed.sector = parsed.sector || null;
 
     return parsed;
-
   } catch (error) {
     console.error("AI Rule Parser Error:", error.message);
+
     throw new Error("Failed to parse rule using AI");
   }
 }
