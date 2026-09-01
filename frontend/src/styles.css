@@ -1110,3 +1110,171 @@ button:hover {
     font-size: 26px;
   }
 }
+/* ALL STOCKS PAGE */
+
+.all-stocks-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.stocks-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.stocks-page-header h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+}
+
+.section-label {
+  margin: 0;
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.page-description {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.stock-count-card {
+  min-width: 150px;
+  padding: 18px 22px;
+  background: #162238;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stock-count-card span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.stock-count-card strong {
+  font-size: 26px;
+  color: #ffffff;
+}
+
+/* Search toolbar */
+
+.stocks-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stock-search {
+  flex: 1;
+  max-width: 650px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  background: #111b2d;
+  border: 1px solid #293b57;
+  border-radius: 9px;
+}
+
+.stock-search span {
+  color: #60a5fa;
+  font-size: 21px;
+}
+
+.stock-search input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.stock-search input::placeholder {
+  color: #64748b;
+}
+
+.search-result-count {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Table container */
+
+.stocks-table-card {
+  background: #111b2d;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stocks-table-header {
+  padding: 20px 22px;
+  border-bottom: 1px solid #293b57;
+}
+
+.stocks-table-header h2 {
+  margin: 0 0 5px;
+  font-size: 18px;
+}
+
+.stocks-table-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Empty search result */
+
+.stock-empty-state {
+  padding: 70px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  background: #1d2c44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #60a5fa;
+  font-size: 24px;
+}
+
+.stock-empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.stock-empty-state p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Make the stock table fit the new card */
+
+.stocks-table-card .stock-table {
+  margin-top: 0;
+}
+
+.stocks-table-card .table-wrapper {
+  margin-top: 0;
+}
