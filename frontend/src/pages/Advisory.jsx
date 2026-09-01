@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import API from "../services/api";
 import Loader from "../components/ui/Loader";
 import ErrorBanner from "../components/ui/ErrorBanner";
 
 export default function Advisory() {
   const { symbol } = useParams();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,95 +15,364 @@ export default function Advisory() {
     const fetchAdvisory = async () => {
       try {
         setLoading(true);
+        setError("");
+
         const res = await API.get(`/advisory/${symbol}`);
-        setData(res.data.data);
+
+        setData(res.data.data || null);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch advisory");
+        console.error("Advisory error:", err);
+
+        setError(
+          err.response?.data?.message ||
+          "Failed to load stock advisory."
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAdvisory();
+    if (symbol) {
+      fetchAdvisory();
+    }
   }, [symbol]);
 
-  if (loading) return <Loader />;
-  if (error) return <ErrorBanner message={error} />;
-  if (!data) return null;
+  if (loading) {
+    return (
+      <div className="advisory-page">
+        <Loader />
+      </div>
+    );
+  }
 
-  const { quantitativeScore, riskLevel, aiAdvisory } = data;
+  if (error) {
+    return (
+      <div className="advisory-page">
+        <ErrorBanner message={error} />
+      </div>
+    );
+  }
 
-  const getRecommendationColor = (rec) => {
-    if (rec === "BUY") return "green";
-    if (rec === "SELL") return "red";
-    return "orange";
+  if (!data) {
+    return (
+      <div className="advisory-page">
+        <ErrorBanner message="No advisory data available." />
+      </div>
+    );
+  }
+
+  const financials = data.financials || {};
+  const quantitative = data.quantitativeAnalysis || {};
+  const aiAdvisory = data.aiAdvisory || {};
+
+  const score = quantitative.score ?? 0;
+  const maxScore = quantitative.maxScore ?? 10;
+  const riskLevel = quantitative.riskLevel || "Unknown";
+  const baselineRecommendation =
+    quantitative.baselineRecommendation || "N/A";
+
+  const recommendation =
+    aiAdvisory.recommendation || "N/A";
+
+  const confidence =
+    typeof aiAdvisory.confidence === "number"
+      ? aiAdvisory.confidence
+      : 0;
+
+  const strengths = Array.isArray(aiAdvisory.strengths)
+    ? aiAdvisory.strengths
+    : [];
+
+  const risks = Array.isArray(aiAdvisory.risks)
+    ? aiAdvisory.risks
+    : [];
+
+  const getRecommendationClass = (value) => {
+    if (value === "BUY") return "buy";
+    if (value === "SELL") return "sell";
+    return "hold";
+  };
+
+  const formatValue = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return "—";
+    }
+
+    return value;
   };
 
   return (
     <div className="advisory-page">
-      <h2>{data.symbol} Advisory Report</h2>
 
+      {/* Page heading */}
+      <div className="advisory-header">
+        <div>
+          <span className="eyebrow">AI STOCK ANALYSIS</span>
+
+          <h1>
+            {data.company || data.symbol}
+          </h1>
+
+          <div className="advisory-company-meta">
+            <span className="advisory-symbol">
+              {data.symbol}
+            </span>
+
+            {data.sector && (
+              <span className="advisory-sector">
+                {data.sector}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <Link
+          to="/stocks"
+          className="advisory-back-link"
+        >
+          ← Back to Stocks
+        </Link>
+      </div>
+
+      {/* Main analysis cards */}
       <div className="advisory-top">
+
         <div className="score-card">
-          <h3>Quantitative Score</h3>
-          <div className="score-value">{quantitativeScore} / 10</div>
+          <span className="advisory-card-label">
+            StockVision Score
+          </span>
+
+          <div className="score-value">
+            {score}
+            <small> / {maxScore}</small>
+          </div>
+
+          <p>
+            Deterministic quantitative score
+          </p>
         </div>
 
         <div className="risk-card">
-          <h3>Risk Level</h3>
-          <span className={`risk-badge ${riskLevel.toLowerCase()}`}>
-            {riskLevel}
+          <span className="advisory-card-label">
+            Risk Level
           </span>
+
+          <div className="advisory-card-value">
+            <span
+              className={`risk-badge ${riskLevel.toLowerCase()}`}
+            >
+              {riskLevel}
+            </span>
+          </div>
+
+          <p>
+            Based on StockVision financial rules
+          </p>
         </div>
 
         <div className="recommendation-card">
-          <h3>Recommendation</h3>
-          <span
-            className="recommendation-badge"
-            style={{
-              background: getRecommendationColor(aiAdvisory.recommendation),
-            }}
-          >
-            {aiAdvisory.recommendation}
+          <span className="advisory-card-label">
+            AI Recommendation
           </span>
+
+          <div className="advisory-card-value">
+            <span
+              className={`recommendation-badge ${getRecommendationClass(
+                recommendation
+              )}`}
+            >
+              {recommendation}
+            </span>
+          </div>
+
+          <p>
+            Baseline: {baselineRecommendation}
+          </p>
         </div>
+
       </div>
 
-      <div className="confidence-section">
-        <h3>Confidence Level</h3>
-        <div className="confidence-bar">
-          <div
-            className="confidence-fill"
-            style={{ width: `${aiAdvisory.confidence}%` }}
-          ></div>
+      {/* Financial data */}
+      <section className="advisory-section">
+        <div className="advisory-section-header">
+          <div>
+            <span className="eyebrow">
+              FINANCIAL SNAPSHOT
+            </span>
+
+            <h2>Key Fundamentals</h2>
+          </div>
         </div>
-        <p>{aiAdvisory.confidence}%</p>
-      </div>
 
-      <div className="summary-section">
-        <h3>Summary</h3>
-        <p>{aiAdvisory.summary}</p>
-      </div>
+        <div className="financial-grid">
 
+          <div className="financial-card">
+            <span>Current Price</span>
+            <strong>
+              {formatValue(financials.currentPrice)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>P/E Ratio</span>
+            <strong>
+              {formatValue(financials.peRatio)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>PEG Ratio</span>
+            <strong>
+              {formatValue(financials.pegRatio)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>Market Cap</span>
+            <strong>
+              {formatValue(financials.marketCap)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>Revenue Growth</span>
+            <strong>
+              {formatValue(financials.revenueGrowth)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>EBITDA Growth</span>
+            <strong>
+              {formatValue(financials.ebitdaGrowth)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>Debt / FCF</span>
+            <strong>
+              {formatValue(financials.debtToFcf)}
+            </strong>
+          </div>
+
+          <div className="financial-card">
+            <span>Volume</span>
+            <strong>
+              {formatValue(financials.volume)}
+            </strong>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Confidence */}
+      <section className="advisory-section">
+        <div className="confidence-section">
+          <div className="confidence-heading">
+            <div>
+              <span className="eyebrow">
+                AI CONFIDENCE
+              </span>
+
+              <h2>
+                Confidence Level
+              </h2>
+            </div>
+
+            <strong>
+              {confidence}%
+            </strong>
+          </div>
+
+          <div className="confidence-bar">
+            <div
+              className="confidence-fill"
+              style={{
+                width: `${Math.min(
+                  Math.max(confidence, 0),
+                  100
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* AI summary */}
+      <section className="summary-section">
+        <span className="eyebrow">
+          AI EXPLANATION
+        </span>
+
+        <h2>Investment Summary</h2>
+
+        <p>
+          {aiAdvisory.summary ||
+            "No AI summary is available."}
+        </p>
+      </section>
+
+      {/* Strengths and risks */}
       <div className="analysis-section">
-        <div className="strengths">
-          <h3>Strengths</h3>
-          <ul>
-            {aiAdvisory.strengths.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-        </div>
 
-        <div className="risks">
-          <h3>Risks</h3>
-          <ul>
-            {aiAdvisory.risks.map((r, i) => (
-              <li key={i}>{r}</li>
-            ))}
-          </ul>
-        </div>
+        <section className="strengths">
+          <span className="analysis-label positive">
+            STRENGTHS
+          </span>
+
+          <h2>What Looks Positive</h2>
+
+          {strengths.length > 0 ? (
+            <ul>
+              {strengths.map((strength, index) => (
+                <li key={`${strength}-${index}`}>
+                  <span>✓</span>
+                  {strength}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No strengths available.</p>
+          )}
+        </section>
+
+        <section className="risks">
+          <span className="analysis-label warning">
+            RISKS
+          </span>
+
+          <h2>What to Consider</h2>
+
+          {risks.length > 0 ? (
+            <ul>
+              {risks.map((risk, index) => (
+                <li key={`${risk}-${index}`}>
+                  <span>!</span>
+                  {risk}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No risks available.</p>
+          )}
+        </section>
+
       </div>
+
+      {/* Disclaimer */}
+      <div className="advisory-disclaimer">
+        <strong>Educational analysis only</strong>
+
+        <p>
+          {data.disclaimer ||
+            "StockVision provides educational financial analysis and does not constitute personalized investment advice."}
+        </p>
+      </div>
+
     </div>
   );
 }

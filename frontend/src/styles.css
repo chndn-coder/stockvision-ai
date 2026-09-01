@@ -1278,3 +1278,692 @@ button:hover {
 .stocks-table-card .table-wrapper {
   margin-top: 0;
 }
+/* WATCHLIST */
+
+.watchlist-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* Page heading */
+
+.watchlist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.watchlist-header h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+}
+
+.watchlist-count-card {
+  min-width: 150px;
+  padding: 18px 22px;
+  background: #162238;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.watchlist-count-card span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.watchlist-count-card strong {
+  font-size: 26px;
+}
+
+/* Search */
+
+.watchlist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.watchlist-search {
+  flex: 1;
+  max-width: 650px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  background: #111b2d;
+  border: 1px solid #293b57;
+  border-radius: 9px;
+}
+
+.watchlist-search span {
+  color: #60a5fa;
+  font-size: 20px;
+}
+
+.watchlist-search input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+}
+
+.watchlist-result-count {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Stock cards */
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.watchlist-stock-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 20px;
+  transition: 0.2s ease;
+}
+
+.watchlist-stock-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.watchlist-stock-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.watchlist-symbol-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
+  background: #1e3a5f;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.watchlist-company {
+  min-width: 0;
+  flex: 1;
+}
+
+.watchlist-company strong {
+  display: block;
+  font-size: 15px;
+}
+
+.watchlist-company span {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watchlist-saved-badge {
+  color: #facc15;
+  background: #332d14;
+  border: 1px solid #514717;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Price */
+
+.watchlist-price-section {
+  margin-top: 22px;
+  padding: 17px 0;
+  border-top: 1px solid #26344d;
+  border-bottom: 1px solid #26344d;
+}
+
+.watchlist-price-section span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.watchlist-price-section strong {
+  font-size: 23px;
+}
+
+/* Card actions */
+
+.watchlist-card-footer {
+  display: flex;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.watchlist-advisory-link,
+.watchlist-alert-link {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 7px;
+  padding: 9px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.watchlist-advisory-link {
+  background: #2563eb;
+  color: white;
+}
+
+.watchlist-advisory-link:hover {
+  background: #1d4ed8;
+}
+
+.watchlist-alert-link {
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+
+.watchlist-alert-link:hover {
+  background: #1e293b;
+}
+
+/* Empty state */
+
+.watchlist-empty {
+  min-height: 360px;
+  background: #111b2d;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.watchlist-empty-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #1d2c44;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 15px;
+}
+
+.watchlist-empty h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.watchlist-empty p {
+  margin: 0;
+  max-width: 450px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.watchlist-empty-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.watchlist-primary-link,
+.watchlist-secondary-link {
+  text-decoration: none;
+  border-radius: 7px;
+  padding: 10px 15px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.watchlist-primary-link {
+  background: #2563eb;
+  color: white;
+}
+
+.watchlist-secondary-link {
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+
+/* Loading */
+
+.watchlist-loader {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.watchlist-loader p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .watchlist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .watchlist-page {
+    padding: 18px;
+  }
+
+  .watchlist-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .watchlist-count-card {
+    width: 100%;
+  }
+
+  .watchlist-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .watchlist-search {
+    max-width: none;
+  }
+
+  .watchlist-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .watchlist-card-footer {
+    flex-direction: column;
+  }
+
+  .watchlist-empty-actions {
+    flex-direction: column;
+  }
+}
+/* AI ADVISORY PAGE */
+
+.advisory-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.advisory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.advisory-header h1 {
+  margin: 7px 0 10px;
+  font-size: 32px;
+}
+
+.advisory-company-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.advisory-symbol,
+.advisory-sector {
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.advisory-symbol {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+.advisory-sector {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.advisory-back-link {
+  color: #94a3b8;
+  text-decoration: none;
+  border: 1px solid #334155;
+  border-radius: 7px;
+  padding: 9px 13px;
+  font-size: 12px;
+}
+
+.advisory-back-link:hover {
+  color: white;
+  background: #1e293b;
+}
+
+/* Main cards */
+
+.advisory-top {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.score-card,
+.risk-card,
+.recommendation-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.advisory-card-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.score-value {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.score-value small {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.advisory-card-value {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+.score-card p,
+.risk-card p,
+.recommendation-card p {
+  color: #64748b;
+  font-size: 11px;
+  margin: 12px 0 0;
+}
+
+/* Badges */
+
+.risk-badge,
+.recommendation-badge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.risk-badge.low {
+  background: #163d2a;
+  color: #4ade80;
+}
+
+.risk-badge.medium {
+  background: #4a3511;
+  color: #facc15;
+}
+
+.risk-badge.high {
+  background: #451a1a;
+  color: #f87171;
+}
+
+.recommendation-badge.buy {
+  background: #163d2a;
+  color: #4ade80;
+}
+
+.recommendation-badge.hold {
+  background: #4a3511;
+  color: #facc15;
+}
+
+.recommendation-badge.sell {
+  background: #451a1a;
+  color: #f87171;
+}
+
+/* Sections */
+
+.advisory-section {
+  margin-top: 28px;
+}
+
+.advisory-section-header {
+  margin-bottom: 14px;
+}
+
+.advisory-section-header h2,
+.confidence-heading h2,
+.summary-section h2,
+.strengths h2,
+.risks h2 {
+  margin: 5px 0 0;
+  font-size: 19px;
+}
+
+/* Financial data */
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.financial-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 10px;
+  padding: 17px;
+}
+
+.financial-card span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.financial-card strong {
+  font-size: 17px;
+}
+
+/* Confidence */
+
+.confidence-section {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.confidence-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.confidence-heading strong {
+  font-size: 22px;
+  color: #60a5fa;
+}
+
+.confidence-bar {
+  height: 9px;
+  background: #0f172a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 10px;
+}
+
+/* Summary */
+
+.summary-section {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 22px;
+  margin-top: 28px;
+}
+
+.summary-section p {
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
+/* Strengths and risks */
+
+.analysis-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.strengths,
+.risks {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.analysis-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.analysis-label.positive {
+  color: #4ade80;
+}
+
+.analysis-label.warning {
+  color: #f87171;
+}
+
+.strengths ul,
+.risks ul {
+  list-style: none;
+  padding: 0;
+  margin: 17px 0 0;
+}
+
+.strengths li,
+.risks li {
+  display: flex;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #26344d;
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.strengths li:last-child,
+.risks li:last-child {
+  border-bottom: none;
+}
+
+.strengths li span {
+  color: #4ade80;
+}
+
+.risks li span {
+  color: #f87171;
+}
+
+/* Disclaimer */
+
+.advisory-disclaimer {
+  background: #0f172a;
+  border: 1px solid #293b57;
+  border-radius: 10px;
+  padding: 17px;
+  margin-top: 18px;
+}
+
+.advisory-disclaimer strong {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.advisory-disclaimer p {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Responsive */
+
+@media (max-width: 1000px) {
+  .financial-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .advisory-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .advisory-page {
+    padding: 18px;
+  }
+
+  .advisory-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .financial-grid,
+  .analysis-section {
+    grid-template-columns: 1fr;
+  }
+}
