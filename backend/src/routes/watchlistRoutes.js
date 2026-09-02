@@ -1,15 +1,20 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
   getWatchlist,
-  addToWatchlist
+  addToWatchlist,
+  removeFromWatchlist,
 } = require("../controllers/watchlistController");
 
-// GET WATCHLIST
+// Get saved stocks
 router.get("/", getWatchlist);
 
-// ADD STOCK
+// Add a stock
 router.post("/", addToWatchlist);
+
+// Remove a stock
+router.delete("/:symbol", removeFromWatchlist);
 
 module.exports = router;

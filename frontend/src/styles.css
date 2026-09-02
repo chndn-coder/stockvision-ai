@@ -1967,3 +1967,35 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
+/* Watchlist remove action */
+
+.watchlist-remove-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #4b2630;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.watchlist-remove-btn:hover:not(:disabled) {
+  background: #3b171d;
+  border-color: #7f1d1d;
+}
+
+.watchlist-remove-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.watchlist-success {
+  margin-bottom: 18px;
+  padding: 11px 14px;
+  background: #123524;
+  border: 1px solid #1f6b43;
+  color: #86efac;
+  border-radius: 8px;
+  font-size: 13px;
+}

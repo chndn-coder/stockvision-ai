@@ -8,7 +8,9 @@ export default function Watchlist() {
   const [stocks, setStocks] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // Load saved stocks
   useEffect(() => {
@@ -40,6 +42,34 @@ export default function Watchlist() {
       stock.company_name?.toLowerCase().includes(searchText)
     );
   });
+
+  const removeStock = async (symbol) => {
+    try {
+      setRemoving(symbol);
+      setError("");
+      setSuccess("");
+
+      await API.delete(`/watchlist/${symbol}`);
+
+      // Update the page without another request
+      setStocks((currentStocks) =>
+        currentStocks.filter(
+          (stock) => stock.symbol !== symbol
+        )
+      );
+
+      setSuccess(`${symbol} removed from watchlist`);
+    } catch (err) {
+      console.error("Remove watchlist error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          "Failed to remove stock from watchlist."
+      );
+    } finally {
+      setRemoving("");
+    }
+  };
 
   return (
     <div className="watchlist-page">
@@ -94,7 +124,13 @@ export default function Watchlist() {
         <ErrorBanner message={error} />
       )}
 
-      {/* No saved stocks yet */}
+      {!loading && success && (
+        <div className="watchlist-success">
+          {success}
+        </div>
+      )}
+
+      {/* Empty watchlist */}
       {!loading && !error && stocks.length === 0 && (
         <div className="watchlist-empty">
           <div className="watchlist-empty-icon">☆</div>
@@ -107,11 +143,17 @@ export default function Watchlist() {
           </p>
 
           <div className="watchlist-empty-actions">
-            <Link to="/stocks" className="watchlist-primary-link">
+            <Link
+              to="/stocks"
+              className="watchlist-primary-link"
+            >
               Explore Stocks
             </Link>
 
-            <Link to="/screener" className="watchlist-secondary-link">
+            <Link
+              to="/screener"
+              className="watchlist-secondary-link"
+            >
               Use AI Screener
             </Link>
           </div>
@@ -183,6 +225,16 @@ export default function Watchlist() {
                     Create Alert
                   </Link>
                 </div>
+
+                <button
+                  className="watchlist-remove-btn"
+                  onClick={() => removeStock(stock.symbol)}
+                  disabled={removing === stock.symbol}
+                >
+                  {removing === stock.symbol
+                    ? "Removing..."
+                    : "Remove from Watchlist"}
+                </button>
               </article>
             ))}
           </div>
