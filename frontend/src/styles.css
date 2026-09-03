@@ -1999,3 +1999,604 @@ button:hover {
   border-radius: 8px;
   font-size: 13px;
 }
+/*  PORTFOLIO */
+
+.portfolio-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.portfolio-header h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+}
+
+.portfolio-holding-count {
+  min-width: 140px;
+  background: #162238;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 18px 22px;
+}
+
+.portfolio-holding-count span {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.portfolio-holding-count strong {
+  display: block;
+  font-size: 26px;
+  margin-top: 5px;
+}
+
+/* Portfolio summary */
+
+.portfolio-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.portfolio-summary-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.portfolio-summary-card span {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-bottom: 9px;
+}
+
+.portfolio-summary-card strong {
+  display: block;
+  font-size: 23px;
+}
+
+.portfolio-summary-card small {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  margin-top: 6px;
+}
+
+.positive {
+  color: #4ade80 !important;
+}
+
+.negative {
+  color: #f87171 !important;
+}
+
+.neutral {
+  color: #cbd5e1 !important;
+}
+
+/* Main layout */
+
+.portfolio-layout {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* Add holding form */
+
+.portfolio-add-card,
+.portfolio-holdings-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+}
+
+.portfolio-add-card {
+  padding: 21px;
+}
+
+.portfolio-add-card h2 {
+  margin: 5px 0 7px;
+  font-size: 20px;
+}
+
+.portfolio-form-description {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.portfolio-add-card label {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-top: 13px;
+}
+
+.portfolio-add-card input {
+  margin: 7px 0 0;
+}
+
+.portfolio-add-btn {
+  width: 100%;
+  background: #2563eb;
+  color: white;
+  margin-top: 17px;
+}
+
+.portfolio-add-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.portfolio-add-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Holdings */
+
+.portfolio-holdings-card {
+  overflow: hidden;
+}
+
+.portfolio-section-header {
+  padding: 20px;
+  border-bottom: 1px solid #293b57;
+}
+
+.portfolio-section-header h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.portfolio-table-wrapper {
+  overflow-x: auto;
+}
+
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.portfolio-table th {
+  background: #111a2b;
+  color: #94a3b8;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 13px 14px;
+  text-align: left;
+  border: none;
+}
+
+.portfolio-table td {
+  padding: 14px;
+  border: none;
+  border-top: 1px solid #26344d;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.portfolio-table tbody tr:hover {
+  background: #19253a;
+}
+
+.portfolio-company strong {
+  display: block;
+  color: white;
+  font-size: 13px;
+}
+
+.portfolio-company span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.portfolio-pl {
+  font-weight: 700;
+}
+
+.portfolio-delete-btn {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #4b2630;
+  padding: 6px 9px;
+  font-size: 10px;
+}
+
+.portfolio-delete-btn:hover:not(:disabled) {
+  background: #3b171d;
+}
+
+/* Empty state */
+
+.portfolio-empty {
+  padding: 70px 30px;
+  text-align: center;
+}
+
+.portfolio-empty-icon {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 13px;
+  background: #1d2c44;
+  color: #60a5fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+}
+
+.portfolio-empty h3 {
+  margin: 0 0 7px;
+}
+
+.portfolio-empty p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.portfolio-explore-link {
+  display: inline-block;
+  margin-top: 12px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 7px;
+  padding: 9px 13px;
+  font-size: 11px;
+}
+
+/* Messages */
+
+.portfolio-success {
+  padding: 11px 14px;
+  margin-bottom: 17px;
+  border-radius: 8px;
+  background: #123524;
+  border: 1px solid #1f6b43;
+  color: #86efac;
+  font-size: 12px;
+}
+
+.portfolio-loader {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.portfolio-loader p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 1150px) {
+  .portfolio-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .portfolio-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .portfolio-page {
+    padding: 18px;
+  }
+
+  .portfolio-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .portfolio-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* PRICE ALERTS */
+
+.alerts-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.alerts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.alerts-header h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+}
+
+.alerts-count-card {
+  min-width: 145px;
+  padding: 18px 22px;
+  background: #162238;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+}
+
+.alerts-count-card span {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.alerts-count-card strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 26px;
+}
+
+/* Main layout */
+
+.alerts-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.create-alert-card,
+.alerts-list-card {
+  background: #151f33;
+  border: 1px solid #293b57;
+  border-radius: 12px;
+}
+
+.create-alert-card {
+  padding: 21px;
+}
+
+.create-alert-card h2 {
+  margin: 5px 0 7px;
+  font-size: 20px;
+}
+
+.alert-form-description {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.create-alert-card label {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-top: 13px;
+}
+
+.create-alert-card input,
+.create-alert-card select {
+  width: 100%;
+  margin: 7px 0 0;
+  padding: 11px 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 7px;
+  color: white;
+  outline: none;
+}
+
+.create-alert-card select:focus,
+.create-alert-card input:focus {
+  border-color: #3b82f6;
+}
+
+.create-alert-btn {
+  width: 100%;
+  margin-top: 17px;
+  background: #2563eb;
+  color: white;
+}
+
+.create-alert-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+/* Alert list */
+
+.alerts-list-card {
+  overflow: hidden;
+}
+
+.alerts-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px;
+  border-bottom: 1px solid #293b57;
+}
+
+.alerts-list-header h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.alerts-list-header > span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.alerts-list {
+  padding: 0;
+}
+
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 20px;
+  border-bottom: 1px solid #26344d;
+}
+
+.alert-card:last-child {
+  border-bottom: none;
+}
+
+.alert-card:hover {
+  background: #19253a;
+}
+
+.alert-status-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #163d2a;
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-name-row strong {
+  font-size: 13px;
+}
+
+.alert-active-badge {
+  background: #163d2a;
+  color: #4ade80;
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+.alert-condition {
+  color: #cbd5e1;
+  font-size: 12px;
+  margin: 6px 0 4px;
+}
+
+.trigger-time {
+  color: #64748b;
+  font-size: 10px;
+  margin: 0;
+}
+
+.alert-delete-btn {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #4b2630;
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
+.alert-delete-btn:hover:not(:disabled) {
+  background: #3b171d;
+}
+
+/* Empty and loading states */
+
+.alerts-empty {
+  padding: 70px 30px;
+  text-align: center;
+}
+
+.alerts-empty-icon {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 13px;
+  background: #1d2c44;
+  color: #60a5fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alerts-empty h3 {
+  margin: 0 0 7px;
+}
+
+.alerts-empty p {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.alerts-loader {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.alerts-loader p {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.alerts-success {
+  margin-bottom: 18px;
+  padding: 11px 14px;
+  background: #123524;
+  border: 1px solid #1f6b43;
+  color: #86efac;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 950px) {
+  .alerts-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .alerts-page {
+    padding: 18px;
+  }
+
+  .alerts-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .alert-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .alert-delete-btn {
+    width: 100%;
+  }
+}
