@@ -1,101 +1,108 @@
 require("dotenv").config();
 
-const express = require("express");
-const cors = require("cors");
 const cron = require("node-cron");
 
-/* ==========================
-   ROUTES
-========================== */
-const watchlistRoutes = require("./routes/watchlistRoutes");
-const stockRoutes = require("./routes/stockRoutes");
-const portfolioRoutes = require("./routes/portfolioRoutes");
-const authRoutes = require("./routes/authRoutes");
-const alertRoutes = require("./routes/alertRoutes");
-const advisoryRoutes = require("./routes/advisoryRoutes");
-
-/* ==========================
-   SERVICES
-========================== */
-
+const app = require("./app");
 const { fetchAndStoreStocks } = require("./services/stockDataService");
 const evaluateAlerts = require("./services/alertEngine");
 
-const app = express();
-
-/* ==========================
-   MIDDLEWARE
-========================== */
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
-
-app.use(express.json());
-
-/* ==========================
-   HEALTH CHECK
-========================== */
-
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "StockVision Backend Running 🚀",
-  });
-});
-
-/* ==========================
-   API ROUTES
-========================== */
-
-app.use("/api/stocks", stockRoutes);
-app.use("/api/portfolio", portfolioRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/alerts", alertRoutes);   // ✅ ALERT ROUTE ADDED
-app.use("/api/advisory", advisoryRoutes);   // ✅ ADVISORY ROUTE ADDED
-app.use("/api/watchlist", watchlistRoutes);   // ✅ WATCHLIST ROUTE ADDED
-
-/* ==========================
-   ALERT ENGINE CRON
-========================== */
-
-// Runs every 1 minute
-cron.schedule("*/1 * * * *", async () => {
-  console.log("⏳ Running alert evaluation...");
-  await evaluateAlerts();
-});
-
-/* ==========================
-   GLOBAL ERROR HANDLER
-========================== */
-
-app.use((err, req, res, next) => {
-  console.error("Global Error:", err.message);
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
-
-/* ==========================
-   SERVER START
-========================== */
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+/* ==========================
+   BACKGROUND JOBS
+========================== */
 
-  try {
-    console.log("📡 Fetching stock data...");
-    await fetchAndStoreStocks();
-    console.log("✅ Stock data update completed.");
-  } catch (error) {
-    console.error("❌ Stock fetch failed:", error.message);
+function startBackgroundJobs() {
+  const jobsEnabled =
+    process.env.RUN_BACKGROUND_JOBS !== "false";
+
+  if (!jobsEnabled) {
+    console.log("Background jobs are disabled.");
+    return;
   }
+
+  // Check active price alerts every minute
+  cron.schedule("* * * * *", async () => {
+    try {
+      console.log("Running alert evaluation...");
+      await evaluateAlerts();
+    } catch (error) {
+      console.error(
+        "Alert evaluation failed:",
+        error.message
+      );
+    }
+  });
+
+  console.log("Background jobs started.");
+}
+
+/* ==========================
+   INITIAL STOCK UPDATE
+========================== */
+
+async function updateStocksOnStartup() {
+  try {
+    console.log("Fetching stock data...");
+
+    await fetchAndStoreStocks();
+
+    console.log("Stock data update completed.");
+  } catch (error) {
+    console.error(
+      "Stock fetch failed:",
+      error.message
+    );
+  }
+}
+
+/* ==========================
+   SERVER
+========================== */
+
+const server = app.listen(PORT, () => {
+  console.log(
+    `StockVision API running on port ${PORT}`
+  );
+
+  console.log(
+    `Environment: ${
+      process.env.NODE_ENV || "development"
+    }`
+  );
+
+  startBackgroundJobs();
+
+  updateStocksOnStartup();
 });
+
+/* ==========================
+   GRACEFUL SHUTDOWN
+========================== */
+
+function shutdown(signal) {
+  console.log(`${signal} received. Shutting down...`);
+
+  server.close(() => {
+    console.log("HTTP server closed.");
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    console.error(
+      "Forced shutdown after timeout."
+    );
+
+    process.exit(1);
+  }, 10000).unref();
+}
+
+process.on("SIGTERM", () =>
+  shutdown("SIGTERM")
+);
+
+process.on("SIGINT", () =>
+  shutdown("SIGINT")
+);
+
+module.exports = server;
