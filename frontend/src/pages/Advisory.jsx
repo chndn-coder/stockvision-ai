@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import API from "../services/api";
 import Loader from "../components/ui/Loader";
 import ErrorBanner from "../components/ui/ErrorBanner";
 
 export default function Advisory() {
   const { symbol } = useParams();
+  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [searchSymbol, setSearchSymbol] =
+    useState("");
+  const [loading, setLoading] =
+    useState(Boolean(symbol));
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -16,16 +25,22 @@ export default function Advisory() {
       try {
         setLoading(true);
         setError("");
+        setData(null);
 
-        const res = await API.get(`/advisory/${symbol}`);
+        const res = await API.get(
+          `/advisory/${symbol}`
+        );
 
         setData(res.data.data || null);
       } catch (err) {
-        console.error("Advisory error:", err);
+        console.error(
+          "Advisory error:",
+          err
+        );
 
         setError(
           err.response?.data?.message ||
-          "Failed to load stock advisory."
+            "Failed to load stock advisory."
         );
       } finally {
         setLoading(false);
@@ -34,8 +49,148 @@ export default function Advisory() {
 
     if (symbol) {
       fetchAdvisory();
+    } else {
+      setLoading(false);
+      setData(null);
+      setError("");
     }
   }, [symbol]);
+
+  const openAdvisory = () => {
+    const normalizedSymbol =
+      searchSymbol.trim().toUpperCase();
+
+    if (!normalizedSymbol) {
+      setError(
+        "Enter a stock symbol to continue."
+      );
+      return;
+    }
+
+    if (
+      !/^[A-Z0-9.-]{1,20}$/.test(
+        normalizedSymbol
+      )
+    ) {
+      setError(
+        "Enter a valid stock symbol."
+      );
+      return;
+    }
+
+    navigate(
+      `/advisory/${normalizedSymbol}`
+    );
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    openAdvisory();
+  };
+
+  /*
+   * General Advisory landing page.
+   *
+   * This is shown when the user opens
+   * /advisory from the sidebar.
+   */
+  if (!symbol) {
+    return (
+      <div className="advisory-page">
+        <div className="advisory-selector">
+          <div className="advisory-selector-copy">
+            <span className="eyebrow">
+              AI STOCK ANALYSIS
+            </span>
+
+            <h1>Analyze a Stock</h1>
+
+            <p>
+              Enter a stock symbol to generate
+              StockVision&apos;s quantitative
+              score, risk analysis and AI
+              explanation.
+            </p>
+          </div>
+
+          {error && (
+            <ErrorBanner message={error} />
+          )}
+
+          <form
+            className="advisory-selector-form"
+            onSubmit={handleSubmit}
+          >
+            <label htmlFor="advisory-symbol">
+              Stock Symbol
+            </label>
+
+            <div className="advisory-search-row">
+              <input
+                id="advisory-symbol"
+                type="text"
+                placeholder="Example: AAPL"
+                value={searchSymbol}
+                onChange={(event) => {
+                  setSearchSymbol(
+                    event.target.value
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                autoComplete="off"
+              />
+
+              <button type="submit">
+                Analyze Stock
+              </button>
+            </div>
+          </form>
+
+          <div className="advisory-examples">
+            <span>Try an example</span>
+
+            <div className="advisory-example-list">
+              {[
+                "AAPL",
+                "MSFT",
+                "INFY",
+                "TCS",
+              ].map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/advisory/${example}`
+                    )
+                  }
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="advisory-selector-note">
+            <strong>
+              How StockVision analyzes stocks
+            </strong>
+
+            <p>
+              Financial metrics are evaluated
+              using deterministic StockVision
+              rules. AI is used as an
+              explanation layer for the
+              resulting analysis.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -49,6 +204,15 @@ export default function Advisory() {
     return (
       <div className="advisory-page">
         <ErrorBanner message={error} />
+
+        <div className="advisory-error-actions">
+          <Link
+            to="/advisory"
+            className="advisory-back-link"
+          >
+            ← Analyze another stock
+          </Link>
+        </div>
       </div>
     );
   }
@@ -57,39 +221,70 @@ export default function Advisory() {
     return (
       <div className="advisory-page">
         <ErrorBanner message="No advisory data available." />
+
+        <div className="advisory-error-actions">
+          <Link
+            to="/advisory"
+            className="advisory-back-link"
+          >
+            ← Analyze another stock
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const financials = data.financials || {};
-  const quantitative = data.quantitativeAnalysis || {};
-  const aiAdvisory = data.aiAdvisory || {};
+  const financials =
+    data.financials || {};
 
-  const score = quantitative.score ?? 0;
-  const maxScore = quantitative.maxScore ?? 10;
-  const riskLevel = quantitative.riskLevel || "Unknown";
+  const quantitative =
+    data.quantitativeAnalysis || {};
+
+  const aiAdvisory =
+    data.aiAdvisory || {};
+
+  const score =
+    quantitative.score ?? 0;
+
+  const maxScore =
+    quantitative.maxScore ?? 10;
+
+  const riskLevel =
+    quantitative.riskLevel ||
+    "Unknown";
+
   const baselineRecommendation =
-    quantitative.baselineRecommendation || "N/A";
+    quantitative.baselineRecommendation ||
+    "N/A";
 
   const recommendation =
-    aiAdvisory.recommendation || "N/A";
+    aiAdvisory.recommendation ||
+    baselineRecommendation;
 
   const confidence =
-    typeof aiAdvisory.confidence === "number"
+    typeof aiAdvisory.confidence ===
+    "number"
       ? aiAdvisory.confidence
       : 0;
 
-  const strengths = Array.isArray(aiAdvisory.strengths)
-    ? aiAdvisory.strengths
-    : [];
+  const strengths =
+    Array.isArray(
+      aiAdvisory.strengths
+    )
+      ? aiAdvisory.strengths
+      : [];
 
-  const risks = Array.isArray(aiAdvisory.risks)
-    ? aiAdvisory.risks
-    : [];
+  const risks =
+    Array.isArray(aiAdvisory.risks)
+      ? aiAdvisory.risks
+      : [];
 
-  const getRecommendationClass = (value) => {
+  const getRecommendationClass = (
+    value
+  ) => {
     if (value === "BUY") return "buy";
     if (value === "SELL") return "sell";
+
     return "hold";
   };
 
@@ -111,10 +306,13 @@ export default function Advisory() {
       {/* Page heading */}
       <div className="advisory-header">
         <div>
-          <span className="eyebrow">AI STOCK ANALYSIS</span>
+          <span className="eyebrow">
+            AI STOCK ANALYSIS
+          </span>
 
           <h1>
-            {data.company || data.symbol}
+            {data.company ||
+              data.symbol}
           </h1>
 
           <div className="advisory-company-meta">
@@ -130,12 +328,21 @@ export default function Advisory() {
           </div>
         </div>
 
-        <Link
-          to="/stocks"
-          className="advisory-back-link"
-        >
-          ← Back to Stocks
-        </Link>
+        <div className="advisory-header-actions">
+          <Link
+            to="/advisory"
+            className="advisory-back-link"
+          >
+            Analyze Another
+          </Link>
+
+          <Link
+            to="/stocks"
+            className="advisory-back-link"
+          >
+            ← Back to Stocks
+          </Link>
+        </div>
       </div>
 
       {/* Main analysis cards */}
@@ -148,11 +355,15 @@ export default function Advisory() {
 
           <div className="score-value">
             {score}
-            <small> / {maxScore}</small>
+            <small>
+              {" "}
+              / {maxScore}
+            </small>
           </div>
 
           <p>
-            Deterministic quantitative score
+            Deterministic quantitative
+            score
           </p>
         </div>
 
@@ -170,7 +381,8 @@ export default function Advisory() {
           </div>
 
           <p>
-            Based on StockVision financial rules
+            Based on StockVision
+            financial rules
           </p>
         </div>
 
@@ -190,7 +402,8 @@ export default function Advisory() {
           </div>
 
           <p>
-            Baseline: {baselineRecommendation}
+            Baseline:{" "}
+            {baselineRecommendation}
           </p>
         </div>
 
@@ -204,7 +417,9 @@ export default function Advisory() {
               FINANCIAL SNAPSHOT
             </span>
 
-            <h2>Key Fundamentals</h2>
+            <h2>
+              Key Fundamentals
+            </h2>
           </div>
         </div>
 
@@ -213,56 +428,72 @@ export default function Advisory() {
           <div className="financial-card">
             <span>Current Price</span>
             <strong>
-              {formatValue(financials.currentPrice)}
+              {formatValue(
+                financials.currentPrice
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>P/E Ratio</span>
             <strong>
-              {formatValue(financials.peRatio)}
+              {formatValue(
+                financials.peRatio
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>PEG Ratio</span>
             <strong>
-              {formatValue(financials.pegRatio)}
+              {formatValue(
+                financials.pegRatio
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>Market Cap</span>
             <strong>
-              {formatValue(financials.marketCap)}
+              {formatValue(
+                financials.marketCap
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>Revenue Growth</span>
             <strong>
-              {formatValue(financials.revenueGrowth)}
+              {formatValue(
+                financials.revenueGrowth
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>EBITDA Growth</span>
             <strong>
-              {formatValue(financials.ebitdaGrowth)}
+              {formatValue(
+                financials.ebitdaGrowth
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>Debt / FCF</span>
             <strong>
-              {formatValue(financials.debtToFcf)}
+              {formatValue(
+                financials.debtToFcf
+              )}
             </strong>
           </div>
 
           <div className="financial-card">
             <span>Volume</span>
             <strong>
-              {formatValue(financials.volume)}
+              {formatValue(
+                financials.volume
+              )}
             </strong>
           </div>
 
@@ -293,7 +524,10 @@ export default function Advisory() {
               className="confidence-fill"
               style={{
                 width: `${Math.min(
-                  Math.max(confidence, 0),
+                  Math.max(
+                    confidence,
+                    0
+                  ),
                   100
                 )}%`,
               }}
@@ -308,7 +542,9 @@ export default function Advisory() {
           AI EXPLANATION
         </span>
 
-        <h2>Investment Summary</h2>
+        <h2>
+          Investment Summary
+        </h2>
 
         <p>
           {aiAdvisory.summary ||
@@ -324,19 +560,30 @@ export default function Advisory() {
             STRENGTHS
           </span>
 
-          <h2>What Looks Positive</h2>
+          <h2>
+            What Looks Positive
+          </h2>
 
           {strengths.length > 0 ? (
             <ul>
-              {strengths.map((strength, index) => (
-                <li key={`${strength}-${index}`}>
-                  <span>✓</span>
-                  {strength}
-                </li>
-              ))}
+              {strengths.map(
+                (
+                  strength,
+                  index
+                ) => (
+                  <li
+                    key={`${strength}-${index}`}
+                  >
+                    <span>✓</span>
+                    {strength}
+                  </li>
+                )
+              )}
             </ul>
           ) : (
-            <p>No strengths available.</p>
+            <p>
+              No strengths available.
+            </p>
           )}
         </section>
 
@@ -345,19 +592,27 @@ export default function Advisory() {
             RISKS
           </span>
 
-          <h2>What to Consider</h2>
+          <h2>
+            What to Consider
+          </h2>
 
           {risks.length > 0 ? (
             <ul>
-              {risks.map((risk, index) => (
-                <li key={`${risk}-${index}`}>
-                  <span>!</span>
-                  {risk}
-                </li>
-              ))}
+              {risks.map(
+                (risk, index) => (
+                  <li
+                    key={`${risk}-${index}`}
+                  >
+                    <span>!</span>
+                    {risk}
+                  </li>
+                )
+              )}
             </ul>
           ) : (
-            <p>No risks available.</p>
+            <p>
+              No risks available.
+            </p>
           )}
         </section>
 
@@ -365,7 +620,9 @@ export default function Advisory() {
 
       {/* Disclaimer */}
       <div className="advisory-disclaimer">
-        <strong>Educational analysis only</strong>
+        <strong>
+          Educational analysis only
+        </strong>
 
         <p>
           {data.disclaimer ||

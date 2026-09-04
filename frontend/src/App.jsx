@@ -34,6 +34,7 @@ function Layout() {
           <Route path="/stocks" element={<AllStocks />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/advisory" element={<Advisory />} />
           <Route path="/advisory/:symbol" element={<Advisory />} />
           <Route path="/alerts" element={<Alerts />} />
         </Routes>

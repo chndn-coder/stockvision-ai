@@ -81,7 +81,7 @@ export default function Sidebar() {
         <p className="nav-section-title">AI TOOLS</p>
 
         <NavLink
-          to="/advisory/INFY"
+          to="/advisory"
           className={({ isActive }) =>
             isActive ? "nav-link active" : "nav-link"
           }

@@ -6,93 +6,53 @@ const ai = new GoogleGenAI({
 });
 
 /*
- * ============================================================
- * StockVision Quantitative Advisory Engine
- * ============================================================
+ * StockVision quantitative advisory engine.
  *
- * The quantitative score is deterministic.
- *
- * Gemini is used as an explanation layer. It does NOT directly
- * control the quantitative score or database query.
- *
- * This makes the advisory system more predictable and easier
- * to validate.
+ * The score, risk level and baseline recommendation are
+ * deterministic. Gemini is only used to explain the result.
  */
 
-/*
- * ============================================================
- * 1. QUANTITATIVE SCORE
- * ============================================================
- */
+/* ============================================================
+   QUANTITATIVE SCORE
+============================================================ */
 
 function calculateQuantitativeScore(stock) {
   let score = 0;
 
-  /*
-   * Valuation
-   *
-   * Positive PE below 20 receives 2 points.
-   */
-
   if (
     stock.pe_ratio !== null &&
-    stock.pe_ratio > 0 &&
-    stock.pe_ratio < 20
+    Number(stock.pe_ratio) > 0 &&
+    Number(stock.pe_ratio) < 20
   ) {
     score += 2;
   }
-
-  /*
-   * PEG ratio
-   *
-   * PEG below 1.5 is considered favorable for this
-   * simplified scoring model.
-   */
 
   if (
     stock.peg_ratio !== null &&
-    stock.peg_ratio > 0 &&
-    stock.peg_ratio < 1.5
+    Number(stock.peg_ratio) > 0 &&
+    Number(stock.peg_ratio) < 1.5
   ) {
     score += 2;
   }
-
-  /*
-   * Debt efficiency
-   *
-   * Lower debt relative to free cash flow receives points.
-   */
 
   if (
     stock.debt_to_fcf !== null &&
-    stock.debt_to_fcf >= 0 &&
-    stock.debt_to_fcf < 1
+    Number(stock.debt_to_fcf) >= 0 &&
+    Number(stock.debt_to_fcf) < 1
   ) {
     score += 2;
   }
-
-  /*
-   * Revenue growth
-   *
-   * Only positive growth receives points.
-   */
 
   if (
     stock.revenue_growth !== null &&
-    stock.revenue_growth > 0
+    Number(stock.revenue_growth) > 0
   ) {
     score += 2;
   }
 
-  /*
-   * EBITDA growth
-   *
-   * Only positive growth receives points.
-   */
-
   if (
     stock.ebitda_growth !== null &&
-    stock.ebitda_growth > 0
+    Number(stock.ebitda_growth) > 0
   ) {
     score += 2;
   }
@@ -100,21 +60,14 @@ function calculateQuantitativeScore(stock) {
   return score;
 }
 
-/*
- * ============================================================
- * 2. RISK LEVEL
- * ============================================================
- *
- * Risk is calculated independently from the score.
- *
- * This prevents a high quantitative score from accidentally
- * hiding excessive debt risk.
- */
+/* ============================================================
+   RISK LEVEL
+============================================================ */
 
 function calculateRiskLevel(stock, score) {
   if (
     stock.debt_to_fcf !== null &&
-    stock.debt_to_fcf > 2
+    Number(stock.debt_to_fcf) > 2
   ) {
     return "High";
   }
@@ -130,16 +83,9 @@ function calculateRiskLevel(stock, score) {
   return "High";
 }
 
-/*
- * ============================================================
- * 3. BASELINE RECOMMENDATION
- * ============================================================
- *
- * This recommendation is deterministic.
- *
- * Gemini can explain the result, but it cannot silently
- * change the underlying quantitative logic.
- */
+/* ============================================================
+   BASELINE RECOMMENDATION
+============================================================ */
 
 function calculateBaselineRecommendation(score, riskLevel) {
   if (riskLevel === "High") {
@@ -157,22 +103,14 @@ function calculateBaselineRecommendation(score, riskLevel) {
   return "SELL";
 }
 
-/*
- * ============================================================
- * 4. VALIDATE GEMINI RESPONSE
- * ============================================================
- *
- * Never blindly trust external AI output.
- */
+/* ============================================================
+   AI RESPONSE VALIDATION
+============================================================ */
 
 function validateAIAdvisory(result) {
   if (!result || typeof result !== "object") {
     throw new Error("Invalid AI advisory response");
   }
-
-  /*
-   * Summary
-   */
 
   if (
     typeof result.summary !== "string" ||
@@ -180,10 +118,6 @@ function validateAIAdvisory(result) {
   ) {
     throw new Error("AI advisory summary is invalid");
   }
-
-  /*
-   * Strengths and risks
-   */
 
   if (
     !Array.isArray(result.strengths) ||
@@ -193,28 +127,6 @@ function validateAIAdvisory(result) {
       "AI advisory strengths/risks are invalid"
     );
   }
-
-  /*
-   * Recommendation
-   */
-
-  const allowedRecommendations = [
-    "BUY",
-    "HOLD",
-    "SELL",
-  ];
-
-  if (
-    !allowedRecommendations.includes(
-      result.recommendation
-    )
-  ) {
-    throw new Error("Invalid AI recommendation");
-  }
-
-  /*
-   * Confidence
-   */
 
   if (
     typeof result.confidence !== "number" ||
@@ -227,106 +139,198 @@ function validateAIAdvisory(result) {
   return result;
 }
 
-/*
- * ============================================================
- * 5. GENERATE STOCK ADVISORY
- * ============================================================
- */
+/* ============================================================
+   FALLBACK ADVISORY
+============================================================ */
 
-async function generateStockAdvisory(symbol) {
-  try {
-    /*
-     * --------------------------------------------------------
-     * Validate stock symbol
-     * --------------------------------------------------------
-     */
+function buildFallbackAdvisory(
+  stock,
+  quantitativeScore,
+  riskLevel,
+  baselineRecommendation
+) {
+  const strengths = [];
+  const risks = [];
 
-    if (
-      !symbol ||
-      typeof symbol !== "string"
-    ) {
-      throw new Error("Invalid stock symbol");
-    }
+  const peRatio =
+    stock.pe_ratio !== null
+      ? Number(stock.pe_ratio)
+      : null;
 
-    const normalizedSymbol = symbol
-      .trim()
-      .toUpperCase();
+  const pegRatio =
+    stock.peg_ratio !== null
+      ? Number(stock.peg_ratio)
+      : null;
 
-    /*
-     * --------------------------------------------------------
-     * Fetch stock data
-     * --------------------------------------------------------
-     */
+  const debtToFcf =
+    stock.debt_to_fcf !== null
+      ? Number(stock.debt_to_fcf)
+      : null;
 
-    const result = await pool.query(
-      `
-      SELECT
-        symbol,
-        company_name,
-        sector,
-        current_price,
-        pe_ratio,
-        peg_ratio,
-        market_cap,
-        revenue_growth,
-        ebitda_growth,
-        debt_to_fcf,
-        volume
-      FROM stocks
-      WHERE symbol = $1
-      `,
-      [normalizedSymbol]
+  const revenueGrowth =
+    stock.revenue_growth !== null
+      ? Number(stock.revenue_growth)
+      : null;
+
+  const ebitdaGrowth =
+    stock.ebitda_growth !== null
+      ? Number(stock.ebitda_growth)
+      : null;
+
+  // Valuation
+  if (peRatio !== null && peRatio > 0 && peRatio < 20) {
+    strengths.push(
+      "The stock has a relatively favorable positive P/E ratio in the StockVision scoring model."
     );
+  } else if (peRatio !== null && peRatio >= 20) {
+    risks.push(
+      "The P/E ratio is above the favorable range used by the StockVision scoring model."
+    );
+  }
 
-    if (result.rows.length === 0) {
-      throw new Error("Stock not found");
-    }
+  // PEG
+  if (pegRatio !== null && pegRatio > 0 && pegRatio < 1.5) {
+    strengths.push(
+      "The PEG ratio falls within the favorable range used by StockVision."
+    );
+  } else if (pegRatio !== null && pegRatio >= 1.5) {
+    risks.push(
+      "The PEG ratio is above the favorable range used by StockVision."
+    );
+  }
 
-    const stock = result.rows[0];
+  // Debt
+  if (
+    debtToFcf !== null &&
+    debtToFcf >= 0 &&
+    debtToFcf < 1
+  ) {
+    strengths.push(
+      "Debt relative to free cash flow is low in the StockVision model."
+    );
+  } else if (debtToFcf !== null && debtToFcf > 2) {
+    risks.push(
+      "Debt relative to free cash flow is elevated and increases the calculated risk level."
+    );
+  }
 
-    /*
-     * --------------------------------------------------------
-     * Deterministic quantitative analysis
-     * --------------------------------------------------------
-     */
+  // Revenue
+  if (revenueGrowth !== null && revenueGrowth > 0) {
+    strengths.push(
+      "The available data indicates positive revenue growth."
+    );
+  } else if (revenueGrowth !== null) {
+    risks.push(
+      "The available data does not show positive revenue growth."
+    );
+  }
 
-    const quantitativeScore =
-      calculateQuantitativeScore(stock);
+  // EBITDA
+  if (ebitdaGrowth !== null && ebitdaGrowth > 0) {
+    strengths.push(
+      "The available data indicates positive EBITDA growth."
+    );
+  } else if (ebitdaGrowth !== null) {
+    risks.push(
+      "The available data does not show positive EBITDA growth."
+    );
+  }
 
-    const riskLevel =
-      calculateRiskLevel(
-        stock,
-        quantitativeScore
-      );
+  // Ensure the UI always has useful content
+  if (strengths.length === 0) {
+    strengths.push(
+      "No major quantitative strengths were identified from the currently available metrics."
+    );
+  }
 
-    const baselineRecommendation =
-      calculateBaselineRecommendation(
-        quantitativeScore,
-        riskLevel
-      );
+  if (risks.length === 0) {
+    risks.push(
+      "Investors should still consider market conditions and factors not included in this simplified model."
+    );
+  }
 
-    /*
-     * --------------------------------------------------------
-     * Prepare AI analysis
-     * --------------------------------------------------------
-     */
+  const summary =
+    `${stock.company_name} received a StockVision score of ` +
+    `${quantitativeScore}/10 with a ${riskLevel.toLowerCase()} ` +
+    `calculated risk level. The baseline recommendation is ` +
+    `${baselineRecommendation}. This summary is based only on ` +
+    `the financial metrics currently available in StockVision.`;
 
-    const prompt = `
+  return {
+    summary,
+    strengths: strengths.slice(0, 3),
+    risks: risks.slice(0, 3),
+
+    // Keep recommendation controlled by our deterministic engine
+    recommendation: baselineRecommendation,
+
+    // Lower confidence because Gemini explanation was unavailable
+    confidence: 60,
+
+    source: "fallback",
+  };
+}
+
+/* ============================================================
+   AI ERROR CHECK
+============================================================ */
+
+function isTemporaryAIError(error) {
+  const message = String(
+    error?.message || ""
+  ).toLowerCase();
+
+  const status =
+    error?.status ||
+    error?.code ||
+    error?.response?.status;
+
+  return (
+    status === 429 ||
+    status === 503 ||
+    message.includes("503") ||
+    message.includes("429") ||
+    message.includes("unavailable") ||
+    message.includes("high demand") ||
+    message.includes("resource exhausted")
+  );
+}
+
+/* ============================================================
+   SMALL RETRY DELAY
+============================================================ */
+
+function sleep(ms) {
+  return new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
+}
+
+/* ============================================================
+   GEMINI EXPLANATION
+============================================================ */
+
+async function generateAIExplanation(
+  stock,
+  quantitativeScore,
+  riskLevel,
+  baselineRecommendation
+) {
+  const prompt = `
 You are the AI explanation layer of StockVision,
 an educational stock analysis platform.
 
 Analyze ONLY the structured financial data provided below.
 
 Do NOT invent financial metrics.
-
 Do NOT use external information.
-
 Do NOT guarantee investment returns.
-
 Do NOT claim certainty about future stock prices.
 
-Your job is to explain the financial information clearly
-and professionally.
+The recommendation has already been calculated by
+StockVision's deterministic scoring engine.
+
+You must explain that recommendation, not replace it.
 
 Stock:
 Symbol: ${stock.symbol}
@@ -353,7 +357,7 @@ ${riskLevel}
 StockVision Baseline Recommendation:
 ${baselineRecommendation}
 
-Return ONLY valid JSON using exactly this structure:
+Return ONLY valid JSON:
 
 {
   "summary": "Short professional explanation of the stock fundamentals.",
@@ -365,13 +369,11 @@ Return ONLY valid JSON using exactly this structure:
     "risk 1",
     "risk 2"
   ],
-  "recommendation": "BUY",
   "confidence": 75
 }
 
 Rules:
 
-- recommendation must be exactly BUY, HOLD, or SELL.
 - confidence must be a number from 0 to 100.
 - Do not invent missing financial data.
 - Do not provide guaranteed returns.
@@ -380,124 +382,215 @@ Rules:
 - Return JSON only.
 `;
 
-    /*
-     * --------------------------------------------------------
-     * Call Gemini
-     * --------------------------------------------------------
-     *
-     * Uses the current Google GenAI SDK.
-     */
+  const maxAttempts = 2;
 
-    const response =
-      await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          temperature: 0.2,
-          responseMimeType: "application/json",
-        },
-      });
-
-    const text = response.text.trim();
-
-    /*
-     * --------------------------------------------------------
-     * Parse AI response
-     * --------------------------------------------------------
-     */
-
-    let aiResult;
-
+  for (
+    let attempt = 1;
+    attempt <= maxAttempts;
+    attempt += 1
+  ) {
     try {
-      aiResult = JSON.parse(text);
+      const response =
+        await ai.models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: prompt,
+          config: {
+            temperature: 0.2,
+            responseMimeType:
+              "application/json",
+          },
+        });
+
+      if (!response.text) {
+        throw new Error(
+          "AI returned an empty response"
+        );
+      }
+
+      let aiResult;
+
+      try {
+        aiResult = JSON.parse(
+          response.text.trim()
+        );
+      } catch {
+        throw new Error(
+          "AI returned invalid advisory JSON"
+        );
+      }
+
+      validateAIAdvisory(aiResult);
+
+      return {
+        ...aiResult,
+
+        // Never allow AI to override the quantitative engine
+        recommendation:
+          baselineRecommendation,
+
+        source: "gemini",
+      };
     } catch (error) {
-      console.error(
-        "Invalid Gemini JSON:",
-        text
+      console.warn(
+        `Gemini advisory attempt ${attempt} failed:`,
+        error.message
       );
 
-      throw new Error(
-        "AI returned invalid advisory format"
-      );
+      if (
+        attempt < maxAttempts &&
+        isTemporaryAIError(error)
+      ) {
+        await sleep(1000 * attempt);
+        continue;
+      }
+
+      throw error;
     }
-
-    /*
-     * --------------------------------------------------------
-     * Validate AI response
-     * --------------------------------------------------------
-     */
-
-    validateAIAdvisory(aiResult);
-
-    /*
-     * --------------------------------------------------------
-     * Return complete StockVision advisory
-     * --------------------------------------------------------
-     */
-
-    return {
-      symbol: stock.symbol,
-
-      company: stock.company_name,
-
-      sector: stock.sector,
-
-      /*
-       * Raw financial data used by the analysis.
-       */
-
-      financials: {
-        currentPrice: stock.current_price,
-        peRatio: stock.pe_ratio,
-        pegRatio: stock.peg_ratio,
-        marketCap: stock.market_cap,
-        revenueGrowth: stock.revenue_growth,
-        ebitdaGrowth: stock.ebitda_growth,
-        debtToFcf: stock.debt_to_fcf,
-        volume: stock.volume,
-      },
-
-      /*
-       * Deterministic StockVision analysis.
-       */
-
-      quantitativeAnalysis: {
-        score: quantitativeScore,
-        maxScore: 10,
-        riskLevel,
-        baselineRecommendation,
-      },
-
-      /*
-       * Gemini explanation layer.
-       */
-
-      aiAdvisory: aiResult,
-
-      /*
-       * Financial disclaimer.
-       */
-
-      disclaimer:
-        "StockVision provides educational financial analysis and does not constitute personalized investment advice.",
-    };
-  } catch (error) {
-    console.error(
-      "Advisory Engine Error:",
-      error.message
-    );
-
-    throw new Error(
-      "Failed to generate advisory"
-    );
   }
 }
 
-/*
- * ============================================================
- * EXPORT
- * ============================================================
- */
+/* ============================================================
+   GENERATE STOCK ADVISORY
+============================================================ */
+
+async function generateStockAdvisory(symbol) {
+  if (
+    !symbol ||
+    typeof symbol !== "string"
+  ) {
+    throw new Error("Invalid stock symbol");
+  }
+
+  const normalizedSymbol =
+    symbol.trim().toUpperCase();
+
+  /*
+   * Database and deterministic analysis errors should still
+   * behave like real application errors.
+   */
+
+  let stock;
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        symbol,
+        company_name,
+        sector,
+        current_price,
+        pe_ratio,
+        peg_ratio,
+        market_cap,
+        revenue_growth,
+        ebitda_growth,
+        debt_to_fcf,
+        volume
+      FROM stocks
+      WHERE symbol = $1
+      `,
+      [normalizedSymbol]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("Stock not found");
+    }
+
+    stock = result.rows[0];
+  } catch (error) {
+    console.error(
+      "Advisory Database Error:",
+      error.message
+    );
+
+    // Preserve this message for the controller's 404 handling
+    if (error.message === "Stock not found") {
+      throw error;
+    }
+
+    throw new Error(
+      "Failed to load stock data"
+    );
+  }
+
+  /*
+   * The core analysis does not depend on Gemini.
+   */
+
+  const quantitativeScore =
+    calculateQuantitativeScore(stock);
+
+  const riskLevel =
+    calculateRiskLevel(
+      stock,
+      quantitativeScore
+    );
+
+  const baselineRecommendation =
+    calculateBaselineRecommendation(
+      quantitativeScore,
+      riskLevel
+    );
+
+  /*
+   * Try Gemini, but do not allow an AI outage to break
+   * the entire advisory feature.
+   */
+
+  let aiAdvisory;
+
+  try {
+    aiAdvisory =
+      await generateAIExplanation(
+        stock,
+        quantitativeScore,
+        riskLevel,
+        baselineRecommendation
+      );
+  } catch (error) {
+    console.warn(
+      "Gemini unavailable. Using StockVision fallback:",
+      error.message
+    );
+
+    aiAdvisory =
+      buildFallbackAdvisory(
+        stock,
+        quantitativeScore,
+        riskLevel,
+        baselineRecommendation
+      );
+  }
+
+  return {
+    symbol: stock.symbol,
+    company: stock.company_name,
+    sector: stock.sector,
+
+    financials: {
+      currentPrice: stock.current_price,
+      peRatio: stock.pe_ratio,
+      pegRatio: stock.peg_ratio,
+      marketCap: stock.market_cap,
+      revenueGrowth: stock.revenue_growth,
+      ebitdaGrowth: stock.ebitda_growth,
+      debtToFcf: stock.debt_to_fcf,
+      volume: stock.volume,
+    },
+
+    quantitativeAnalysis: {
+      score: quantitativeScore,
+      maxScore: 10,
+      riskLevel,
+      baselineRecommendation,
+    },
+
+    aiAdvisory,
+
+    disclaimer:
+      "StockVision provides educational financial analysis and does not constitute personalized investment advice.",
+  };
+}
 
 module.exports = {
   generateStockAdvisory,
