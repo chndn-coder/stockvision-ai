@@ -85,111 +85,488 @@ const STOCK_SYMBOLS = [
   "UPS",
   "FDX",
   "LOW",
-  "BKNG"
+  "BKNG",
 ];
+
+const REQUEST_DELAY_MS =
+  Number(process.env.STOCK_REQUEST_DELAY_MS) || 1200;
 
 const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchAndStoreStocks() {
-  try {
-    console.log(
-      "Fetching stock data from FMP (stable API)..."
-    );
+const toNumberOrNull = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
 
-    for (const symbol of STOCK_SYMBOLS) {
-      try {
-        // Fetch quote and key metrics together
-        const [quoteRes, metricsRes] =
-          await Promise.all([
-            axios.get(
-              `https://financialmodelingprep.com/stable/quote?symbol=${symbol}&apikey=${API_KEY}`
-            ),
-            axios.get(
-              `https://financialmodelingprep.com/stable/key-metrics?symbol=${symbol}&apikey=${API_KEY}`
-            )
-          ]);
+  const number = Number(value);
 
-        const stock = quoteRes.data?.[0];
-        const metrics = metricsRes.data?.[0];
+  return Number.isFinite(number)
+    ? number
+    : null;
+};
 
-        if (!stock) {
-          console.log(
-            `No data for ${symbol}`
-          );
+const calculateGrowth = (
+  currentValue,
+  previousValue
+) => {
+  const current =
+    toNumberOrNull(currentValue);
 
-          await delay(300);
-          continue;
-        }
+  const previous =
+    toNumberOrNull(previousValue);
 
-        const earningsYield =
-          metrics?.earningsYield;
+  if (
+    current === null ||
+    previous === null ||
+    previous === 0
+  ) {
+    return null;
+  }
 
-        const calculatedPE =
-          earningsYield &&
-          Number(earningsYield) !== 0
-            ? Number(
-                (
-                  1 /
-                  Number(earningsYield)
-                ).toFixed(2)
-              )
-            : null;
+  return Number(
+    (
+      (current - previous) /
+      Math.abs(previous)
+    ).toFixed(4)
+  );
+};
 
-        await pool.query(
-          `
-          INSERT INTO stocks
-          (
-            symbol,
-            company_name,
-            current_price,
-            market_cap,
-            pe_ratio,
-            updated_at
-          )
-          VALUES ($1, $2, $3, $4, $5, NOW())
-
-          ON CONFLICT (symbol)
-          DO UPDATE SET
-            company_name = EXCLUDED.company_name,
-            current_price = EXCLUDED.current_price,
-            market_cap = EXCLUDED.market_cap,
-            pe_ratio = EXCLUDED.pe_ratio,
-            updated_at = NOW();
-          `,
-          [
-            stock.symbol,
-            stock.name,
-            stock.price,
-            stock.marketCap,
-            calculatedPE
-          ]
-        );
-
-        console.log(
-          `Updated: ${symbol}`
-        );
-      } catch (err) {
-        console.log(
-          `Skipped ${symbol}: ${err.message}`
-        );
-      }
-
-      // Small pause between stocks
-      await delay(300);
-    }
-
-    console.log(
-      "Stock data update completed."
-    );
-  } catch (error) {
-    console.error(
-      "Stock Data Error:",
-      error.message
-    );
+class RateLimitError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "RateLimitError";
   }
 }
 
+async function requestFmp(
+  endpoint,
+  params,
+  options = {}
+) {
+  const { optional = false } = options;
+
+  try {
+    const response = await axios.get(
+      `https://financialmodelingprep.com/stable/${endpoint}`,
+      {
+        params: {
+          ...params,
+          apikey: API_KEY,
+        },
+        timeout: 15000,
+      }
+    );
+
+    await delay(REQUEST_DELAY_MS);
+
+    return response.data;
+  } catch (error) {
+    const status =
+      error.response?.status;
+
+    await delay(REQUEST_DELAY_MS);
+
+    if (status === 429) {
+      throw new RateLimitError(
+        "FMP rate limit reached"
+      );
+    }
+
+    if (optional) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+/* ========================================
+   MARKET DATA
+======================================== */
+
+async function refreshMarketData() {
+  console.log(
+    "Starting market data refresh..."
+  );
+
+  let updated = 0;
+  let skipped = 0;
+
+  for (const symbol of STOCK_SYMBOLS) {
+    try {
+      const quoteData =
+        await requestFmp(
+          "quote",
+          { symbol }
+        );
+
+      const stock =
+        quoteData?.[0];
+
+      if (!stock) {
+        console.log(
+          `No quote data for ${symbol}`
+        );
+
+        skipped += 1;
+        continue;
+      }
+
+      const price =
+        toNumberOrNull(stock.price);
+
+      const marketCap =
+        toNumberOrNull(
+          stock.marketCap
+        );
+
+      const volume =
+        toNumberOrNull(
+          stock.volume
+        );
+
+      await pool.query(
+        `
+        INSERT INTO stocks
+        (
+          symbol,
+          company_name,
+          current_price,
+          market_cap,
+          volume,
+          pe_ratio,
+          updated_at
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          NOW()
+        )
+
+        ON CONFLICT (symbol)
+        DO UPDATE SET
+          company_name =
+            COALESCE(
+              EXCLUDED.company_name,
+              stocks.company_name
+            ),
+
+          current_price =
+            COALESCE(
+              EXCLUDED.current_price,
+              stocks.current_price
+            ),
+
+          market_cap =
+            COALESCE(
+              EXCLUDED.market_cap,
+              stocks.market_cap
+            ),
+
+          volume =
+            COALESCE(
+              EXCLUDED.volume,
+              stocks.volume
+            ),
+
+          pe_ratio =
+            COALESCE(
+              EXCLUDED.pe_ratio,
+              stocks.pe_ratio
+            ),
+
+          updated_at = NOW();
+        `,
+        [
+          stock.symbol || symbol,
+          stock.name || null,
+          price,
+          marketCap,
+          volume,
+          toNumberOrNull(stock.pe),
+        ]
+      );
+
+      updated += 1;
+
+      console.log(
+        `Market updated: ${symbol}`
+      );
+    } catch (error) {
+      if (
+        error instanceof RateLimitError
+      ) {
+        console.warn(
+          "FMP rate limit reached. Stopping market refresh."
+        );
+
+        break;
+      }
+
+      skipped += 1;
+
+      console.log(
+        `Market skipped ${symbol}: ${
+          error.response?.status
+            ? `HTTP ${error.response.status}`
+            : error.message
+        }`
+      );
+    }
+  }
+
+  console.log(
+    `Market refresh finished. Updated: ${updated}, Skipped: ${skipped}`
+  );
+
+  return {
+    updated,
+    skipped,
+  };
+}
+
+/* ========================================
+   FUNDAMENTAL DATA
+======================================== */
+
+async function refreshFundamentals() {
+  console.log(
+    "Starting fundamental data refresh..."
+  );
+
+  let updated = 0;
+  let skipped = 0;
+
+  for (const symbol of STOCK_SYMBOLS) {
+    try {
+      const profileData =
+        await requestFmp(
+          "profile",
+          { symbol },
+          { optional: true }
+        );
+
+      const metricsData =
+        await requestFmp(
+          "key-metrics",
+          { symbol },
+          { optional: true }
+        );
+
+      const incomeData =
+        await requestFmp(
+          "income-statement",
+          {
+            symbol,
+            limit: 2,
+          },
+          { optional: true }
+        );
+
+      const cashFlowData =
+        await requestFmp(
+          "cash-flow-statement",
+          {
+            symbol,
+            limit: 1,
+          },
+          { optional: true }
+        );
+
+      const profile =
+        profileData?.[0];
+
+      const metrics =
+        metricsData?.[0];
+
+      const incomeStatements =
+        Array.isArray(incomeData)
+          ? incomeData
+          : [];
+
+      const cashFlow =
+        cashFlowData?.[0];
+
+      const currentIncome =
+        incomeStatements[0];
+
+      const previousIncome =
+        incomeStatements[1];
+
+      const sector =
+        profile?.sector || null;
+
+      let peRatio = null;
+
+      const earningsYield =
+        toNumberOrNull(
+          metrics?.earningsYield
+        );
+
+      if (
+        earningsYield !== null &&
+        earningsYield !== 0
+      ) {
+        peRatio = Number(
+          (
+            1 /
+            earningsYield
+          ).toFixed(2)
+        );
+      }
+
+      const pegRatio =
+        toNumberOrNull(
+          metrics?.pegRatio
+        );
+
+      const revenueGrowth =
+        calculateGrowth(
+          currentIncome?.revenue,
+          previousIncome?.revenue
+        );
+
+      const ebitdaGrowth =
+        calculateGrowth(
+          currentIncome?.ebitda,
+          previousIncome?.ebitda
+        );
+
+      const freeCashFlow =
+        toNumberOrNull(
+          cashFlow?.freeCashFlow
+        );
+
+      const directDebtToFcf =
+        toNumberOrNull(
+          metrics?.debtToFreeCashFlow
+        );
+
+      const totalDebt =
+        toNumberOrNull(
+          metrics?.totalDebt
+        );
+
+      let debtToFcf =
+        directDebtToFcf;
+
+      if (
+        debtToFcf === null &&
+        totalDebt !== null &&
+        freeCashFlow !== null &&
+        freeCashFlow !== 0
+      ) {
+        debtToFcf = Number(
+          (
+            totalDebt /
+            Math.abs(freeCashFlow)
+          ).toFixed(4)
+        );
+      }
+
+      await pool.query(
+        `
+        UPDATE stocks
+
+        SET
+          sector =
+            COALESCE(
+              $2,
+              sector
+            ),
+
+          pe_ratio =
+            COALESCE(
+              $3,
+              pe_ratio
+            ),
+
+          peg_ratio =
+            COALESCE(
+              $4,
+              peg_ratio
+            ),
+
+          debt_to_fcf =
+            COALESCE(
+              $5,
+              debt_to_fcf
+            ),
+
+          revenue_growth =
+            COALESCE(
+              $6,
+              revenue_growth
+            ),
+
+          ebitda_growth =
+            COALESCE(
+              $7,
+              ebitda_growth
+            )
+
+        WHERE symbol = $1;
+        `,
+        [
+          symbol,
+          sector,
+          peRatio,
+          pegRatio,
+          debtToFcf,
+          revenueGrowth,
+          ebitdaGrowth,
+        ]
+      );
+
+      updated += 1;
+
+      console.log(
+        `Fundamentals updated: ${symbol}`
+      );
+    } catch (error) {
+      if (
+        error instanceof RateLimitError
+      ) {
+        console.warn(
+          "FMP rate limit reached. Stopping fundamental refresh."
+        );
+
+        break;
+      }
+
+      skipped += 1;
+
+      console.log(
+        `Fundamentals skipped ${symbol}: ${
+          error.response?.status
+            ? `HTTP ${error.response.status}`
+            : error.message
+        }`
+      );
+    }
+  }
+
+  console.log(
+    `Fundamental refresh finished. Updated: ${updated}, Skipped: ${skipped}`
+  );
+
+  return {
+    updated,
+    skipped,
+  };
+}
+
 module.exports = {
-  fetchAndStoreStocks
+  refreshMarketData,
+  refreshFundamentals,
 };
