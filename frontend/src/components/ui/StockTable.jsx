@@ -1,6 +1,63 @@
 import API from "../../services/api";
 
 export default function StockTable({ stocks }) {
+  const formatPrice = (value) => {
+    if (value === null || value === undefined) {
+      return "—";
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    return `$${number.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatRatio = (value) => {
+    if (value === null || value === undefined) {
+      return "—";
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    return number.toFixed(2);
+  };
+
+  const formatMarketCap = (value) => {
+    if (value === null || value === undefined) {
+      return "—";
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    if (number >= 1_000_000_000_000) {
+      return `$${(number / 1_000_000_000_000).toFixed(2)}T`;
+    }
+
+    if (number >= 1_000_000_000) {
+      return `$${(number / 1_000_000_000).toFixed(2)}B`;
+    }
+
+    if (number >= 1_000_000) {
+      return `$${(number / 1_000_000).toFixed(2)}M`;
+    }
+
+    return `$${number.toLocaleString("en-US")}`;
+  };
+
   const addToWatchlist = async (symbol) => {
     try {
       const res = await API.post("/watchlist", {
@@ -46,18 +103,20 @@ export default function StockTable({ stocks }) {
                 {stock.symbol}
               </td>
 
-              <td>{stock.company_name}</td>
-
               <td>
-                {stock.current_price ?? "—"}
+                {stock.company_name || "—"}
               </td>
 
               <td>
-                {stock.pe_ratio ?? "—"}
+                {formatPrice(stock.current_price)}
               </td>
 
               <td>
-                {stock.market_cap ?? "—"}
+                {formatRatio(stock.pe_ratio)}
+              </td>
+
+              <td>
+                {formatMarketCap(stock.market_cap)}
               </td>
 
               <td>

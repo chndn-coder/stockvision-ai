@@ -64,6 +64,7 @@ export default function Advisory() {
       setError(
         "Enter a stock symbol to continue."
       );
+
       return;
     }
 
@@ -75,6 +76,7 @@ export default function Advisory() {
       setError(
         "Enter a valid stock symbol."
       );
+
       return;
     }
 
@@ -288,16 +290,126 @@ export default function Advisory() {
     return "hold";
   };
 
-  const formatValue = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === ""
-    ) {
+  const isMissing = (value) =>
+    value === null ||
+    value === undefined ||
+    value === "";
+
+  const formatPrice = (value) => {
+    if (isMissing(value)) return "—";
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
       return "—";
     }
 
-    return value;
+    return `$${number.toLocaleString(
+      "en-US",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    )}`;
+  };
+
+  const formatRatio = (value) => {
+    if (isMissing(value)) return "—";
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    return number.toFixed(2);
+  };
+
+  const formatGrowth = (value) => {
+    if (isMissing(value)) return "—";
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    return `${(
+      number * 100
+    ).toFixed(2)}%`;
+  };
+
+  const formatMarketCap = (value) => {
+    if (isMissing(value)) return "—";
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    if (
+      number >=
+      1_000_000_000_000
+    ) {
+      return `$${(
+        number /
+        1_000_000_000_000
+      ).toFixed(2)}T`;
+    }
+
+    if (number >= 1_000_000_000) {
+      return `$${(
+        number /
+        1_000_000_000
+      ).toFixed(2)}B`;
+    }
+
+    if (number >= 1_000_000) {
+      return `$${(
+        number /
+        1_000_000
+      ).toFixed(2)}M`;
+    }
+
+    return `$${number.toLocaleString(
+      "en-US"
+    )}`;
+  };
+
+  const formatVolume = (value) => {
+    if (isMissing(value)) return "—";
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return "—";
+    }
+
+    if (number >= 1_000_000_000) {
+      return `${(
+        number /
+        1_000_000_000
+      ).toFixed(2)}B`;
+    }
+
+    if (number >= 1_000_000) {
+      return `${(
+        number /
+        1_000_000
+      ).toFixed(2)}M`;
+    }
+
+    if (number >= 1_000) {
+      return `${(
+        number /
+        1_000
+      ).toFixed(2)}K`;
+    }
+
+    return number.toLocaleString(
+      "en-US"
+    );
   };
 
   return (
@@ -388,7 +500,7 @@ export default function Advisory() {
 
         <div className="recommendation-card">
           <span className="advisory-card-label">
-            AI Recommendation
+            StockVision Recommendation
           </span>
 
           <div className="advisory-card-value">
@@ -427,8 +539,9 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>Current Price</span>
+
             <strong>
-              {formatValue(
+              {formatPrice(
                 financials.currentPrice
               )}
             </strong>
@@ -436,8 +549,9 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>P/E Ratio</span>
+
             <strong>
-              {formatValue(
+              {formatRatio(
                 financials.peRatio
               )}
             </strong>
@@ -445,8 +559,9 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>PEG Ratio</span>
+
             <strong>
-              {formatValue(
+              {formatRatio(
                 financials.pegRatio
               )}
             </strong>
@@ -454,26 +569,33 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>Market Cap</span>
+
             <strong>
-              {formatValue(
+              {formatMarketCap(
                 financials.marketCap
               )}
             </strong>
           </div>
 
           <div className="financial-card">
-            <span>Revenue Growth</span>
+            <span>
+              Revenue Growth
+            </span>
+
             <strong>
-              {formatValue(
+              {formatGrowth(
                 financials.revenueGrowth
               )}
             </strong>
           </div>
 
           <div className="financial-card">
-            <span>EBITDA Growth</span>
+            <span>
+              EBITDA Growth
+            </span>
+
             <strong>
-              {formatValue(
+              {formatGrowth(
                 financials.ebitdaGrowth
               )}
             </strong>
@@ -481,8 +603,9 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>Debt / FCF</span>
+
             <strong>
-              {formatValue(
+              {formatRatio(
                 financials.debtToFcf
               )}
             </strong>
@@ -490,8 +613,9 @@ export default function Advisory() {
 
           <div className="financial-card">
             <span>Volume</span>
+
             <strong>
-              {formatValue(
+              {formatVolume(
                 financials.volume
               )}
             </strong>

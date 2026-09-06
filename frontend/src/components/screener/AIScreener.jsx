@@ -13,14 +13,149 @@ export default function AIScreener() {
 
   const examples = [
     "Find stocks with PE below 30",
-    "Find IT stocks with PE below 25",
+    "Find Technology stocks with PE below 25",
     "Find the top 5 stocks with PE below 30",
   ];
 
+  const fieldLabels = {
+    current_price: "Price",
+    market_cap: "Market Cap",
+    pe_ratio: "P/E Ratio",
+    peg_ratio: "PEG Ratio",
+    debt_to_fcf: "Debt / FCF",
+    revenue_growth: "Revenue Growth",
+    ebitda_growth: "EBITDA Growth",
+    volume: "Volume",
+  };
+
+  const isMissing = (value) =>
+    value === null ||
+    value === undefined ||
+    value === "";
+
+  const formatCompactNumber = (value) => {
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return value;
+    }
+
+    if (Math.abs(number) >= 1_000_000_000_000) {
+      return `${(
+        number / 1_000_000_000_000
+      ).toFixed(2)}T`;
+    }
+
+    if (Math.abs(number) >= 1_000_000_000) {
+      return `${(
+        number / 1_000_000_000
+      ).toFixed(2)}B`;
+    }
+
+    if (Math.abs(number) >= 1_000_000) {
+      return `${(
+        number / 1_000_000
+      ).toFixed(2)}M`;
+    }
+
+    if (Math.abs(number) >= 1_000) {
+      return `${(
+        number / 1_000
+      ).toFixed(2)}K`;
+    }
+
+    return number.toLocaleString("en-US");
+  };
+
+  const formatFilterValue = (
+    field,
+    value
+  ) => {
+    if (isMissing(value)) {
+      return "—";
+    }
+
+    // Support "between" filters if the
+    // backend returns two values.
+    if (Array.isArray(value)) {
+      return value
+        .map((item) =>
+          formatFilterValue(field, item)
+        )
+        .join(" and ");
+    }
+
+    const number = Number(value);
+
+    if (
+      field === "revenue_growth" ||
+      field === "ebitda_growth"
+    ) {
+      if (Number.isNaN(number)) {
+        return value;
+      }
+
+      return `${(
+        number * 100
+      ).toFixed(2)}%`;
+    }
+
+    if (field === "current_price") {
+      if (Number.isNaN(number)) {
+        return value;
+      }
+
+      return `$${number.toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}`;
+    }
+
+    if (field === "market_cap") {
+      if (Number.isNaN(number)) {
+        return value;
+      }
+
+      return `$${formatCompactNumber(
+        number
+      )}`;
+    }
+
+    if (field === "volume") {
+      if (Number.isNaN(number)) {
+        return value;
+      }
+
+      return formatCompactNumber(number);
+    }
+
+    if (
+      field === "pe_ratio" ||
+      field === "peg_ratio" ||
+      field === "debt_to_fcf"
+    ) {
+      if (Number.isNaN(number)) {
+        return value;
+      }
+
+      return number.toFixed(2);
+    }
+
+    return value;
+  };
+
+  const getFieldLabel = (field) =>
+    fieldLabels[field] || field;
+
   const runAI = async () => {
-    // Do not send an empty request to the backend
+    // Do not send an empty request
     if (!query.trim()) {
-      setError("Please describe the stocks you are looking for.");
+      setError(
+        "Please describe the stocks you are looking for."
+      );
       return;
     }
 
@@ -30,19 +165,30 @@ export default function AIScreener() {
       setStocks([]);
       setFilters(null);
 
-      // Send the natural-language request to our AI screener
-      const res = await API.post("/stocks/ai-screener", {
-        query: query.trim(),
-      });
+      // Send the natural-language request
+      const res = await API.post(
+        "/stocks/ai-screener",
+        {
+          query: query.trim(),
+        }
+      );
 
-      setStocks(res.data.data || []);
-      setFilters(res.data.filtersApplied || null);
+      setStocks(
+        res.data.data || []
+      );
+
+      setFilters(
+        res.data.filtersApplied || null
+      );
     } catch (err) {
-      console.error("AI Screener error:", err);
+      console.error(
+        "AI Screener error:",
+        err
+      );
 
       setError(
         err.response?.data?.message ||
-        "Unable to run the AI screener. Please try again."
+          "Unable to run the AI screener. Please try again."
       );
     } finally {
       setLoading(false);
@@ -55,8 +201,11 @@ export default function AIScreener() {
   };
 
   const handleKeyDown = (event) => {
-    // Ctrl + Enter runs the screener quickly
-    if (event.ctrlKey && event.key === "Enter") {
+    // Ctrl + Enter runs the screener
+    if (
+      event.ctrlKey &&
+      event.key === "Enter"
+    ) {
       runAI();
     }
   };
@@ -67,13 +216,20 @@ export default function AIScreener() {
       {/* AI screener introduction */}
       <div className="ai-screener-header">
         <div>
-          <span className="eyebrow">AI-POWERED SEARCH</span>
+          <span className="eyebrow">
+            AI-POWERED SEARCH
+          </span>
 
-          <h2>Find Stocks in Plain English</h2>
+          <h2>
+            Find Stocks in Plain English
+          </h2>
 
           <p>
-            Describe the stocks you are looking for and StockVision
-            will translate your request into financial screening rules.
+            Describe the stocks you are
+            looking for and StockVision
+            will translate your request
+            into financial screening
+            rules.
           </p>
         </div>
 
@@ -88,15 +244,27 @@ export default function AIScreener() {
 
         <textarea
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(
+              event.target.value
+            );
+
+            if (error) {
+              setError("");
+            }
+          }}
           onKeyDown={handleKeyDown}
-          placeholder="Example: Find IT stocks with PE below 30 and debt to FCF below 1"
+          placeholder="Example: Find Technology stocks with PE below 30"
           disabled={loading}
         />
 
         <div className="ai-input-footer">
           <span>
-            Press <strong>Ctrl + Enter</strong> to run
+            Press{" "}
+            <strong>
+              Ctrl + Enter
+            </strong>{" "}
+            to run
           </span>
 
           <button
@@ -104,7 +272,9 @@ export default function AIScreener() {
             onClick={runAI}
             disabled={loading}
           >
-            {loading ? "Analyzing..." : "Run AI Screener →"}
+            {loading
+              ? "Analyzing..."
+              : "Run AI Screener →"}
           </button>
         </div>
 
@@ -120,7 +290,9 @@ export default function AIScreener() {
             <button
               key={example}
               className="example-button"
-              onClick={() => handleExample(example)}
+              onClick={() =>
+                handleExample(example)
+              }
               disabled={loading}
             >
               {example}
@@ -134,87 +306,128 @@ export default function AIScreener() {
       {loading && (
         <div className="ai-loading">
           <Loader />
+
           <p>
-            AI is translating your request into screening rules...
+            AI is translating your
+            request into screening
+            rules...
           </p>
         </div>
       )}
 
       {/* Error message */}
       {!loading && error && (
-        <ErrorBanner message={error} />
+        <ErrorBanner
+          message={error}
+        />
       )}
 
       {/* Screening results */}
-      {!loading && stocks.length > 0 && (
-        <div className="ai-results">
+      {!loading &&
+        stocks.length > 0 && (
+          <div className="ai-results">
 
-          <div className="results-header">
-            <div>
-              <span className="eyebrow">SCREENING RESULTS</span>
+            <div className="results-header">
+              <div>
+                <span className="eyebrow">
+                  SCREENING RESULTS
+                </span>
 
-              <h3>
-                {stocks.length} stock{stocks.length !== 1 ? "s" : ""} found
-              </h3>
+                <h3>
+                  {stocks.length}{" "}
+                  stock
+                  {stocks.length !== 1
+                    ? "s"
+                    : ""}{" "}
+                  found
+                </h3>
+              </div>
             </div>
+
+            {/* Rules generated by AI */}
+            {filters && (
+              <div className="filters-applied">
+
+                <div className="filters-title">
+                  <span>
+                    AI-generated filters
+                  </span>
+                </div>
+
+                <div className="filter-list">
+
+                  {filters.filters?.map(
+                    (filter, index) => (
+                      <span
+                        className="filter-chip"
+                        key={`${filter.field}-${index}`}
+                      >
+                        {getFieldLabel(
+                          filter.field
+                        )}{" "}
+                        {filter.operator}{" "}
+                        {formatFilterValue(
+                          filter.field,
+                          filter.value
+                        )}
+                      </span>
+                    )
+                  )}
+
+                  {filters.sector && (
+                    <span className="filter-chip">
+                      Sector:{" "}
+                      {filters.sector}
+                    </span>
+                  )}
+
+                  {filters.limit && (
+                    <span className="filter-chip">
+                      Top {filters.limit}
+                    </span>
+                  )}
+
+                  {filters.sort && (
+                    <span className="filter-chip">
+                      Sort:{" "}
+                      {getFieldLabel(
+                        filters.sort.field
+                      )}{" "}
+                      {filters.sort.direction?.toUpperCase()}
+                    </span>
+                  )}
+
+                </div>
+              </div>
+            )}
+
+            <StockTable
+              stocks={stocks}
+            />
+
           </div>
+        )}
 
-          {/* Show the rules generated by the AI */}
-          {filters && (
-            <div className="filters-applied">
-
-              <div className="filters-title">
-                <span>AI-generated filters</span>
-              </div>
-
-              <div className="filter-list">
-
-                {filters.filters?.map((filter, index) => (
-                  <span className="filter-chip" key={index}>
-                    {filter.field} {filter.operator} {filter.value}
-                  </span>
-                ))}
-
-                {filters.sector && (
-                  <span className="filter-chip">
-                    Sector: {filters.sector}
-                  </span>
-                )}
-
-                {filters.limit && (
-                  <span className="filter-chip">
-                    Top {filters.limit}
-                  </span>
-                )}
-
-                {filters.sort && (
-                  <span className="filter-chip">
-                    Sort: {filters.sort.field}{" "}
-                    {filters.sort.direction}
-                  </span>
-                )}
-
-              </div>
+      {/* Empty state */}
+      {!loading &&
+        !error &&
+        stocks.length === 0 && (
+          <div className="ai-empty-state">
+            <div className="empty-icon">
+              ✦
             </div>
-          )}
 
-          <StockTable stocks={stocks} />
+            <h3>
+              Start your stock search
+            </h3>
 
-        </div>
-      )}
-
-      {/* Empty state before the first search */}
-      {!loading && !error && stocks.length === 0 && (
-        <div className="ai-empty-state">
-          <div className="empty-icon">✦</div>
-
-          <h3>Start your stock search</h3>
-
-          <p>
-            Tell StockVision what kind of companies you want to find.
-          </p>
-        </div>
-      )}
+            <p>
+              Tell StockVision what kind
+              of companies you want to
+              find.
+            </p>
+          </div>
+        )}
 
     </section>
   );
