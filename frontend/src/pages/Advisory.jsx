@@ -156,8 +156,8 @@ export default function Advisory() {
               {[
                 "AAPL",
                 "MSFT",
-                "INFY",
-                "TCS",
+                "NVDA",
+                "JPM",
               ].map((example) => (
                 <button
                   key={example}
