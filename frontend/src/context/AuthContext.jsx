@@ -5,6 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -23,7 +24,6 @@ export const AuthProvider = ({ children }) => {
         email: decoded.email,
         exp: decoded.exp,
       });
-
     } catch (error) {
       console.error("Invalid token during login");
       logout();
@@ -31,31 +31,47 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const restoreSession = () => {
+      const token = localStorage.getItem("token");
 
-    if (!token) return;
-
-    try {
-      const decoded = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-
-      if (decoded.exp < currentTime) {
-        logout(); // Token expired
-      } else {
-        setUser({
-          token,
-          id: decoded.id,
-          email: decoded.email,
-          exp: decoded.exp,
-        });
+      if (!token) {
+        setAuthLoading(false);
+        return;
       }
-    } catch (error) {
-      logout();
-    }
+
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        if (decoded.exp < currentTime) {
+          logout();
+        } else {
+          setUser({
+            token,
+            id: decoded.id,
+            email: decoded.email,
+            exp: decoded.exp,
+          });
+        }
+      } catch (error) {
+        logout();
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        authLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

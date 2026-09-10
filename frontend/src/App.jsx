@@ -18,8 +18,17 @@ import Alerts from "./pages/Alerts";
 import "./styles.css";
 
 function ProtectedRoute({ children }) {
-  const { user } = useContext(AuthContext);
-  return user ? children : <Navigate to="/login" />;
+  const { user, authLoading } = useContext(AuthContext);
+
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        Loading StockVision...
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 function Layout() {
