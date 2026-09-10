@@ -16,11 +16,11 @@ The main idea was to make stock screening easier. Instead of forcing users to bu
 For example:
 
 ```text
-Find stocks with PE below 30
+Find stocks with market cap above 100000000000
 ```
 
 ```text
-Find Technology stocks with PE below 25
+Find stocks with market cap below 500000000000
 ```
 
 ```text
