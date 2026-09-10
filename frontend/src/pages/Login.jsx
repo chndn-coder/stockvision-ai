@@ -1,7 +1,7 @@
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import API from "../services/api";
-import { useNavigate, Link } from "react-router-dom";
 import "./auth.css";
 
 export default function Login() {
@@ -13,15 +13,41 @@ export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    if (!email.trim()) {
+      return "Email is required.";
+    }
+
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email.trim())) {
+      return "Enter a valid email address.";
+    }
+
+    if (!password) {
+      return "Password is required.";
+    }
+
+    return "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
 
       const res = await API.post("/auth/login", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -31,16 +57,14 @@ export default function Login() {
         throw new Error("No token received");
       }
 
-      // Save token in AuthContext
       login(token);
-
-      // Redirect to dashboard
       navigate("/");
-
     } catch (err) {
       console.error("Login error:", err);
+
       setError(
-        err.response?.data?.message || "Invalid credentials. Please try again."
+        err.response?.data?.message ||
+          "Unable to sign in. Check your email and password."
       );
     } finally {
       setLoading(false);
@@ -48,37 +72,150 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Welcome Back</h2>
+    <div className="auth-page">
+      <div className="auth-shell">
 
-        {error && <p className="error-text">{error}</p>}
+        <section className="auth-brand-panel">
+          <Link to="/login" className="auth-brand">
+            <span className="auth-brand-icon">S</span>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+            <div>
+              <strong>StockVision</strong>
+              <small>AI Market Intelligence</small>
+            </div>
+          </Link>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="auth-brand-content">
+            <span className="auth-eyebrow">
+              SMARTER STOCK ANALYSIS
+            </span>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+            <h1>
+              Make market research easier with StockVision AI.
+            </h1>
 
-        <p>
-          Don’t have an account? <Link to="/register">Register</Link>
-        </p>
+            <p>
+              Screen stocks using plain English, monitor your
+              portfolio, create price alerts and receive
+              AI-assisted market analysis from one dashboard.
+            </p>
+
+            <div className="auth-feature-list">
+              <div>
+                <span>⌕</span>
+                <p>
+                  <strong>AI Stock Screener</strong>
+                  <small>
+                    Find stocks using natural-language queries.
+                  </small>
+                </p>
+              </div>
+
+              <div>
+                <span>◇</span>
+                <p>
+                  <strong>Portfolio Tracking</strong>
+                  <small>
+                    Monitor holdings, value and profit or loss.
+                  </small>
+                </p>
+              </div>
+
+              <div>
+                <span>◎</span>
+                <p>
+                  <strong>Alerts & Advisory</strong>
+                  <small>
+                    Track price targets and analyze stocks.
+                  </small>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="auth-brand-footer">
+            Built for learning, research and market exploration.
+          </p>
+        </section>
+
+        <section className="auth-form-panel">
+          <div className="auth-card">
+            <div className="auth-card-heading">
+              <span className="auth-eyebrow">
+                WELCOME BACK
+              </span>
+
+              <h2>Sign in to StockVision</h2>
+
+              <p>
+                Continue to your market intelligence workspace.
+              </p>
+            </div>
+
+            {error && (
+              <div className="auth-error">
+                {error}
+              </div>
+            )}
+
+            <form
+              className="auth-form"
+              onSubmit={handleSubmit}
+              noValidate
+            >
+              <div className="auth-field">
+                <label htmlFor="login-email">
+                  Email address
+                </label>
+
+                <input
+                  id="login-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) =>
+                    setEmail(e.target.value)
+                  }
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="auth-field">
+                <label htmlFor="login-password">
+                  Password
+                </label>
+
+                <input
+                  id="login-password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) =>
+                    setPassword(e.target.value)
+                  }
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <button
+                className="auth-submit-btn"
+                type="submit"
+                disabled={loading}
+              >
+                {loading
+                  ? "Signing in..."
+                  : "Sign In"}
+              </button>
+            </form>
+
+            <p className="auth-switch-text">
+              New to StockVision?{" "}
+              <Link to="/register">
+                Create an account
+              </Link>
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );
