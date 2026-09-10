@@ -1278,6 +1278,45 @@ button:hover {
 .stocks-table-card .table-wrapper {
   margin-top: 0;
 }
+@media (max-width: 700px) {
+  .all-stocks-page {
+    padding: 18px;
+  }
+
+  .stocks-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .stocks-page-header h1 {
+    font-size: 26px;
+  }
+
+  .stock-count-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stocks-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .stock-search {
+    max-width: none;
+    width: 100%;
+  }
+
+  .search-result-count {
+    align-self: flex-start;
+  }
+
+  .stocks-table-header {
+    padding: 18px;
+  }
+}
 /* WATCHLIST */
 
 .watchlist-page {
